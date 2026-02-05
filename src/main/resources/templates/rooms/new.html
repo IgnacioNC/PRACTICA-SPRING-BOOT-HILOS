@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Crear Sala</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
+  >
+    <div class="min-h-screen flex items-start justify-center p-4 pt-8 sm:pt-10">
+      <div class="w-full max-w-xl space-y-5">
+        <header class="text-center space-y-2">
+          <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
+            Nueva sala
+          </p>
+          <h1 class="text-4xl font-bold tracking-tight">Crear sala</h1>
+          <p class="text-sm text-gray-600">Rápido, fácil y listo para jugar.</p>
+        </header>
+
+        <p
+          class="text-red-600 font-semibold"
+          th:if="${error}"
+          th:text="${error}"
+        ></p>
+
+        <p class="text-gray-600" th:if="${#lists.isEmpty(blocks)}">
+          No tienes bloques con 20 o mas preguntas. Crea preguntas antes.
+        </p>
+
+        <form
+          th:if="${!#lists.isEmpty(blocks)}"
+          method="post"
+          th:action="@{/rooms}"
+          class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-emerald-100 backdrop-blur p-6 sm:p-7 space-y-5"
+        >
+          <div class="grid gap-4 md:grid-cols-2">
+            <div class="md:col-span-2">
+              <label class="text-sm font-semibold text-gray-700">Bloque</label>
+              <select
+                class="mt-2 w-full rounded-2xl border-2 border-emerald-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                name="blockId"
+              >
+                <option
+                  th:each="b : ${blocks}"
+                  th:value="${b.id}"
+                  th:selected="${blockId != null and blockId == b.id}"
+                  th:text="${b.name}"
+                ></option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm font-semibold text-gray-700"
+                >Numero de preguntas</label
+              >
+              <input
+                class="mt-2 w-full rounded-2xl border-2 border-sky-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+                type="number"
+                name="questionCount"
+                min="1"
+                th:value="${questionCount}"
+              />
+            </div>
+
+            <div>
+              <label class="text-sm font-semibold text-gray-700"
+                >Modo de seleccion</label
+              >
+              <select
+                class="mt-2 w-full rounded-2xl border-2 border-pink-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                name="selectionMode"
+              >
+                <option
+                  value="MANUAL"
+                  th:selected="${selectionMode != null and selectionMode.name() == 'MANUAL'}"
+                >
+                  Manual
+                </option>
+                <option
+                  value="RANDOM"
+                  th:selected="${selectionMode != null and selectionMode.name() == 'RANDOM'}"
+                >
+                  Aleatorio
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-sm font-semibold text-gray-700"
+                >Paso de preguntas</label
+              >
+              <select
+                class="mt-2 w-full rounded-2xl border-2 border-pink-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-pink-400 focus:outline-none focus:ring-2 focus:ring-pink-200"
+                name="advanceMode"
+              >
+                <option
+                  value="AUTO"
+                  th:selected="${advanceMode != null and advanceMode.name() == 'AUTO'}"
+                >
+                  Automático
+                </option>
+                <option
+                  value="MANUAL"
+                  th:selected="${advanceMode != null and advanceMode.name() == 'MANUAL'}"
+                >
+                  Manual
+                </option>
+              </select>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="text-sm font-semibold text-gray-700"
+                >Tiempo por pregunta (segundos)</label
+              >
+              <input
+                class="mt-2 w-full rounded-2xl border-2 border-yellow-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-200"
+                type="number"
+                name="timePerQuestion"
+                min="5"
+                max="120"
+                th:value="${timePerQuestion}"
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <a
+              class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+              th:href="@{/rooms}"
+              >Volver</a
+            >
+            <button
+              class="w-full sm:w-auto rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-green-700"
+              type="submit"
+            >
+              Crear sala
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </body>
+</html>

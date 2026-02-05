@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Mis Salas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
+  >
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
+      <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h1 class="text-3xl font-bold">Mis Salas</h1>
+          <p class="text-sm text-gray-600">Gestiona tus partidas en vivo</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <a
+            class="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-green-700"
+            th:href="@{/rooms/new}"
+            >Crear sala</a
+          >
+          <form method="post" th:action="@{/rooms/delete-all}">
+            <button
+              class="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-red-700"
+              type="submit"
+              onclick="return confirm('¿Borrar todas tus salas?');"
+            >
+              Borrar todas
+            </button>
+          </form>
+          <a
+            class="rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700"
+            th:href="@{/blocks}"
+            >Volver</a
+          >
+        </div>
+      </header>
+
+      <div
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-sky-100 backdrop-blur p-5 sm:p-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div class="flex-1">
+          <label class="text-sm font-semibold text-gray-700">Buscar sala</label>
+          <input
+            id="room-search"
+            class="mt-2 w-full rounded-2xl border-2 border-emerald-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            type="text"
+            placeholder="Busca por nombre o fecha (YYYY-MM-DD)..."
+          />
+        </div>
+        <div class="flex gap-3 flex-wrap">
+          <div>
+            <label class="text-sm font-semibold text-gray-700">Estado</label>
+            <select
+              id="room-state-filter"
+              class="mt-2 w-full rounded-2xl border-2 border-sky-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+            >
+              <option value="">Todos</option>
+              <option value="WAITING">Esperando</option>
+              <option value="RUNNING">En juego</option>
+              <option value="FINISHED">Finalizada</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-semibold text-gray-700">Fecha</label>
+            <select
+              id="room-date-filter"
+              class="mt-2 w-full rounded-2xl border-2 border-sky-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+            >
+              <option value="">Cualquier fecha</option>
+              <option value="today">Hoy</option>
+              <option value="7">Ultimos 7 dias</option>
+              <option value="30">Ultimos 30 dias</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <p
+        id="empty-msg"
+        class="text-gray-600"
+        th:classappend="${#lists.isEmpty(rooms)} ? '' : ' hidden'"
+      >
+        Aún no has creado salas.
+      </p>
+
+      <div
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-emerald-100 backdrop-blur p-5 sm:p-6"
+        th:if="${!#lists.isEmpty(rooms)}"
+      >
+        <div id="rooms-cards" class="space-y-3 md:hidden">
+          <div
+            th:each="r : ${rooms}"
+            th:attr="data-room-id=${r.id},data-state=${r.state.name()},data-created=${r.createdAt},data-name=${r.block.name}"
+            class="rounded-3xl border-2 border-emerald-100 bg-white p-4 shadow-sm"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs uppercase tracking-widest text-gray-500">
+                  Sala
+                </p>
+                <p class="text-lg font-semibold" th:text="${r.block.name}"></p>
+              </div>
+              <span
+                data-state-label
+                class="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700"
+                th:text="${r.state.name() == 'WAITING' ? 'ESPERANDO' : (r.state.name() == 'RUNNING' ? 'EN JUEGO' : 'FINALIZADA')}"
+              ></span>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <p class="text-xs text-gray-500">PIN</p>
+                <p class="font-semibold" th:text="${r.pin}"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Preguntas</p>
+                <p th:text="${r.questionCount}"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Tiempo</p>
+                <p th:text="${r.timePerQuestion}"></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">Creada</p>
+                <p
+                  th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"
+                ></p>
+              </div>
+              <div>
+                <p class="text-xs text-gray-500">ID</p>
+                <p th:text="${r.id}"></p>
+              </div>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <form
+                th:action="@{/rooms/{id}(id=${r.id})}"
+                method="get"
+                class="flex-1"
+              >
+                <button
+                  class="w-full rounded-full bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700"
+                  type="submit"
+                >
+                  Entrar
+                </button>
+              </form>
+              <form
+                th:action="@{/rooms/{id}/delete(id=${r.id})}"
+                method="post"
+                class="flex-1"
+              >
+                <button
+                  class="w-full rounded-full bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-red-700"
+                  type="submit"
+                  onclick="return confirm('Â¿Borrar esta sala?');"
+                >
+                  Borrar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="rooms-table-wrap" class="hidden md:block overflow-x-auto">
+          <table id="rooms-table" class="w-full text-sm">
+            <thead>
+              <tr class="text-left">
+                <th class="py-2">ID</th>
+                <th class="py-2">PIN</th>
+                <th class="py-2">Bloque</th>
+                <th class="py-2">Preguntas</th>
+                <th class="py-2">Tiempo</th>
+                <th class="py-2">Creada</th>
+                <th class="py-2">Estado</th>
+                <th class="py-2">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              <tr
+                th:each="r : ${rooms}"
+                th:attr="data-room-id=${r.id},data-state=${r.state.name()},data-created=${r.createdAt},data-name=${r.block.name}"
+              >
+                <td class="py-2" th:text="${r.id}"></td>
+                <td class="py-2 font-semibold" th:text="${r.pin}"></td>
+                <td class="py-2" th:text="${r.block.name}"></td>
+                <td class="py-2" th:text="${r.questionCount}"></td>
+                <td class="py-2" th:text="${r.timePerQuestion}"></td>
+                <td
+                  class="py-2"
+                  th:text="${#temporals.format(r.createdAt, 'dd/MM/yyyy HH:mm')}"
+                ></td>
+                <td
+                  data-state-label
+                  class="py-2"
+                  th:text="${r.state.name() == 'WAITING' ? 'ESPERANDO' : (r.state.name() == 'RUNNING' ? 'EN JUEGO' : 'FINALIZADA')}"
+                ></td>
+                <td class="py-2">
+                  <div class="flex flex-wrap gap-2">
+                    <form th:action="@{/rooms/{id}(id=${r.id})}" method="get">
+                      <button
+                        class="px-2 py-1 bg-blue-600 text-white rounded text-xs"
+                        type="submit"
+                      >
+                        Entrar
+                      </button>
+                    </form>
+                    <form
+                      th:action="@{/rooms/{id}/delete(id=${r.id})}"
+                      method="post"
+                    >
+                      <button
+                        class="px-2 py-1 bg-red-600 text-white rounded text-xs"
+                        type="submit"
+                        onclick="return confirm('Â¿Borrar esta sala?');"
+                      >
+                        Borrar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/list.js"></script>
+  </body>
+</html>

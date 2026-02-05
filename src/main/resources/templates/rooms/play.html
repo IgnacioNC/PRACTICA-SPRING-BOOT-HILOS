@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Juego</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    th:attr="data-pin=${room.pin}"
+    class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
+  >
+    <div class="max-w-2xl mx-auto p-4 space-y-6">
+      <header class="flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
+            Jugador
+          </p>
+          <h1 class="text-3xl font-bold">Juego</h1>
+        </div>
+        <form method="post" th:action="@{/play/{pin}/leave(pin=${room.pin})}">
+          <button
+            class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+            type="submit"
+          >
+            Salir
+          </button>
+        </form>
+      </header>
+
+      <section
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-3"
+      >
+        <div class="grid gap-3 sm:grid-cols-2 text-sm">
+          <p><b>PIN:</b> <span th:text="${room.pin}"></span></p>
+          <p><b>Jugador:</b> <span th:text="${player.name}"></span></p>
+          <p>
+            <b>Estado:</b>
+            <span
+              id="room-state"
+              th:text="${room.state.name() == 'WAITING' ? 'ESPERANDO' : (room.state.name() == 'RUNNING' ? 'EN JUEGO' : 'FINALIZADA')}"
+            ></span>
+          </p>
+          <p>
+            <b>Puntos:</b> <span id="player-score" th:text="${score}">0</span>
+          </p>
+          <p>
+            <b>Posición:</b>
+            <span id="player-position" th:text="${position}">0</span>
+          </p>
+        </div>
+      </section>
+
+      <p
+        id="waiting-msg"
+        class="text-gray-600"
+        th:classappend="${room.state.name() == 'WAITING'} ? '' : ' hidden'"
+      >
+        Esperando a que el anfitrión inicie la partida...
+      </p>
+
+      <div
+        id="running-section"
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-4"
+        th:classappend="${room.state.name() == 'RUNNING' and phase.name() == 'QUESTION'} ? '' : ' hidden'"
+      >
+        <p class="text-yellow-700 font-semibold">
+          <b>Tiempo restante:</b>
+          <span id="seconds-left" th:text="${secondsLeft}"></span> s
+        </p>
+
+        <h3
+          class="text-xl font-semibold"
+          id="question-statement"
+          th:text="${rq == null ? '' : rq.question.statement}"
+        >
+          Pregunta
+        </h3>
+
+        <form
+          id="answer-form"
+          th:classappend="${alreadyAnswered != null and !alreadyAnswered} ? '' : ' hidden'"
+          method="post"
+          th:action="@{/play/{pin}/answer(pin=${room.pin})}"
+        >
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button
+              class="w-full rounded-2xl bg-blue-600 px-4 py-4 text-white font-semibold text-left shadow transition hover:bg-blue-700"
+              type="submit"
+              name="option"
+              value="A"
+            >
+              <div class="text-xs opacity-80">A</div>
+              <div
+                id="opt-a"
+                th:text="${rq == null ? '' : rq.question.optionA}"
+              ></div>
+            </button>
+            <button
+              class="w-full rounded-2xl bg-green-600 px-4 py-4 text-white font-semibold text-left shadow transition hover:bg-green-700"
+              type="submit"
+              name="option"
+              value="B"
+            >
+              <div class="text-xs opacity-80">B</div>
+              <div
+                id="opt-b"
+                th:text="${rq == null ? '' : rq.question.optionB}"
+              ></div>
+            </button>
+            <button
+              class="w-full rounded-2xl bg-yellow-500 px-4 py-4 text-white font-semibold text-left shadow transition hover:bg-yellow-600"
+              type="submit"
+              name="option"
+              value="C"
+            >
+              <div class="text-xs opacity-80">C</div>
+              <div
+                id="opt-c"
+                th:text="${rq == null ? '' : rq.question.optionC}"
+              ></div>
+            </button>
+            <button
+              class="w-full rounded-2xl bg-red-600 px-4 py-4 text-white font-semibold text-left shadow transition hover:bg-red-700"
+              type="submit"
+              name="option"
+              value="D"
+            >
+              <div class="text-xs opacity-80">D</div>
+              <div
+                id="opt-d"
+                th:text="${rq == null ? '' : rq.question.optionD}"
+              ></div>
+            </button>
+          </div>
+        </form>
+
+        <p
+          id="answered-msg"
+          class="text-green-700 font-semibold"
+          th:classappend="${alreadyAnswered != null and alreadyAnswered} ? '' : ' hidden'"
+        >
+          Ya has respondido esta pregunta.
+        </p>
+
+        <p
+          id="timeout-msg"
+          class="text-red-600 font-semibold"
+          th:classappend="${alreadyAnswered != null and !alreadyAnswered and secondsLeft != null and secondsLeft <= 0} ? '' : ' hidden'"
+        >
+          Tiempo de espera expirado.
+        </p>
+      </div>
+
+      <div
+        id="result-section"
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-3"
+        th:classappend="${room.state.name() == 'RUNNING' and phase.name() == 'RESULTS'} ? '' : ' hidden'"
+      >
+        <div
+          id="result-banner"
+          class="rounded-2xl p-3 text-white font-semibold"
+          th:classappend="${correct} ? ' bg-green-600' : ' bg-red-600'"
+        >
+          <span
+            id="result-text"
+            th:text="${correct} ? 'Â¡Correcto!' : 'Incorrecto o sin respuesta'"
+          ></span>
+        </div>
+        <p>
+          <b>Pregunta:</b>
+          <span
+            id="result-statement"
+            th:text="${rq == null ? '' : rq.question.statement}"
+          ></span>
+        </p>
+        <p id="result-seconds-row" class="hidden">
+          <b>Tiempo restante:</b>
+          <span id="result-seconds" th:text="${resultSecondsLeft}">0</span> s
+        </p>
+      </div>
+
+      <div
+        id="finished-section"
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6"
+        th:classappend="${room.state.name() == 'FINISHED'} ? '' : ' hidden'"
+      >
+        <p class="font-semibold">La partida ha finalizado.</p>
+        <a
+          class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+          th:href="@{/play/{pin}(pin=${room.pin})}"
+          >Ver resultados</a
+        >
+      </div>
+    </div>
+
+    <script src="/js/play.js"></script>
+  </body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Detalle Bloque</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
+  >
+    <div class="max-w-5xl mx-auto p-4 space-y-6">
+      <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h1 class="text-3xl font-bold" th:text="${block.name}">Bloque</h1>
+          <p class="text-sm text-gray-600">Detalle del bloque</p>
+        </div>
+        <a
+          class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+          th:href="@{/blocks}"
+          >Volver</a
+        >
+      </header>
+
+      <section
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-3"
+      >
+        <div class="grid gap-3 sm:grid-cols-2">
+          <p>
+            <b>Descripción:</b> <span th:text="${block.description}">-</span>
+          </p>
+          <p>
+            <b>Preguntas:</b>
+            <span th:text="${questions == null ? 0 : questions.size()}">0</span>
+          </p>
+        </div>
+        <p class="text-green-700 font-semibold" th:if="${usable}">
+          Bloque usable para sala (>= 20 preguntas)
+        </p>
+        <p class="text-yellow-700 font-semibold" th:if="${!usable}">
+          Aún no es usable (faltan preguntas hasta 20)
+        </p>
+        <div class="flex flex-wrap gap-2">
+          <form
+            th:action="@{/blocks/{id}/questions/demo(id=${block.id})}"
+            method="post"
+          >
+            <button
+              class="rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-yellow-600"
+              type="submit"
+            >
+              Generar preguntas demo hasta 20
+            </button>
+          </form>
+          <a
+            class="rounded-full bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-green-700"
+            th:href="@{/blocks/{bid}/questions/new(bid=${block.id})}"
+            >Nueva pregunta</a
+          >
+        </div>
+      </section>
+
+      <section
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-3"
+      >
+        <h2 class="text-xl font-semibold">Preguntas</h2>
+        <p
+          class="text-gray-600"
+          th:if="${questions == null or #lists.isEmpty(questions)}"
+        >
+          Aún no hay preguntas.
+        </p>
+        <div
+          class="overflow-x-auto"
+          th:if="${questions != null and !#lists.isEmpty(questions)}"
+        >
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left">
+                <th class="py-2">ID</th>
+                <th class="py-2">Enunciado</th>
+                <th class="py-2">Correcta</th>
+                <th class="py-2">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y">
+              <tr th:each="q : ${questions}">
+                <td class="py-2" th:text="${q.id}"></td>
+                <td class="py-2" th:text="${q.statement}"></td>
+                <td class="py-2" th:text="${q.correctOption}"></td>
+                <td class="py-2">
+                  <div class="flex flex-wrap gap-2">
+                    <a
+                      class="rounded-full bg-yellow-500 px-3 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-yellow-600"
+                      th:href="@{/blocks/{bid}/questions/{qid}/edit(bid=${block.id}, qid=${q.id})}"
+                      >Editar</a
+                    >
+                    <form
+                      th:action="@{/blocks/{bid}/questions/{qid}/delete(bid=${block.id}, qid=${q.id})}"
+                      method="post"
+                    >
+                      <button
+                        class="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow transition hover:bg-red-700"
+                        type="submit"
+                      >
+                        Borrar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>

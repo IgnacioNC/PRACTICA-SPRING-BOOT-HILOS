@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Editar Bloque</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-emerald-50 via-cyan-50 to-violet-50 text-gray-900"
+  >
+    <div class="max-w-2xl mx-auto p-4 space-y-6">
+      <header
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h1 class="text-3xl font-bold">Editar bloque</h1>
+          <p class="text-sm text-gray-600">Actualiza nombre y descripción</p>
+        </div>
+        <a
+          class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+          th:href="@{/blocks}"
+          >Volver</a
+        >
+      </header>
+
+      <p
+        class="text-red-600 font-semibold"
+        th:if="${error}"
+        th:text="${error}"
+      ></p>
+
+      <form
+        method="post"
+        th:action="@{/blocks/{id}/edit(id=${block.id})}"
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-cyan-100 backdrop-blur p-5 sm:p-6 space-y-4"
+      >
+        <div>
+          <label class="text-sm font-semibold text-gray-700">Nombre</label>
+          <input
+            class="mt-2 w-full rounded-2xl border-2 border-emerald-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            type="text"
+            name="name"
+            th:value="${block.name}"
+          />
+        </div>
+        <div>
+          <label class="text-sm font-semibold text-gray-700">Descripción</label>
+          <input
+            class="mt-2 w-full rounded-2xl border-2 border-sky-200 bg-white/90 px-4 py-3 text-sm shadow-sm transition focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-200"
+            type="text"
+            name="description"
+            th:value="${block.description}"
+          />
+        </div>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button
+            class="rounded-full bg-yellow-500 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-yellow-600"
+            type="submit"
+          >
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </body>
+</html>

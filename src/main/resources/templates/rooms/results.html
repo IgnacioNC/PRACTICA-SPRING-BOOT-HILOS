@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Resultados</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
+  >
+    <div class="min-h-screen flex items-start justify-center p-4 pt-8 sm:pt-10">
+      <div class="w-full max-w-lg space-y-6">
+      <header class="flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-[0.2em] text-gray-500">
+            Jugador
+          </p>
+          <h1 class="text-3xl font-bold">Resultados</h1>
+        </div>
+        <a
+          class="inline-flex self-start rounded-full bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow transition hover:bg-blue-700 sm:self-auto"
+          th:href="@{/join}"
+          >Volver a unirse</a
+        >
+      </header>
+
+      <section
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6 space-y-2"
+      >
+        <p><b>PIN:</b> <span th:text="${room.pin}"></span></p>
+      </section>
+
+      <section
+        class="rounded-3xl bg-white/90 shadow-xl ring-1 ring-rose-100 backdrop-blur p-5 sm:p-6"
+      >
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left">
+              <th class="py-2">Jugador</th>
+              <th class="py-2 text-right">Puntos</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y">
+            <tr th:each="p : ${ranking}">
+              <td class="py-2" th:text="${p.name}"></td>
+              <td class="py-2 text-right" th:text="${p.score}"></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      </div>
+    </div>
+  </body>
+</html>

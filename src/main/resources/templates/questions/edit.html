@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Editar Pregunta</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/css/tailwind.css" />
+  </head>
+  <body class="bg-gradient-to-br from-yellow-50 via-blue-50 to-green-50 text-gray-900">
+    <div class="max-w-xl mx-auto p-4 space-y-6">
+      <header class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold">Editar pregunta</h1>
+          <p class="text-sm text-gray-600">Bloque: <b th:text="${block.name}"></b></p>
+        </div>
+        <a class="text-sm text-blue-600 hover:underline" th:href="@{/blocks/{id}(id=${block.id})}">Volver</a>
+      </header>
+
+      <p class="text-red-600 font-semibold" th:if="${error}" th:text="${error}"></p>
+
+      <form
+        method="post"
+        th:action="@{/blocks/{bid}/questions/{qid}/edit(bid=${block.id}, qid=${q.id})}"
+        class="bg-white rounded-lg shadow p-4 space-y-3"
+      >
+        <div>
+          <label class="block text-sm font-medium">Enunciado</label>
+          <input class="w-full border rounded px-3 py-2" type="text" name="statement" th:value="${q.statement}" />
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium">Opción A</label>
+            <input class="w-full border rounded px-3 py-2" type="text" name="optionA" th:value="${q.optionA}" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Opción B</label>
+            <input class="w-full border rounded px-3 py-2" type="text" name="optionB" th:value="${q.optionB}" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Opción C</label>
+            <input class="w-full border rounded px-3 py-2" type="text" name="optionC" th:value="${q.optionC}" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Opción D</label>
+            <input class="w-full border rounded px-3 py-2" type="text" name="optionD" th:value="${q.optionD}" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Correcta (A/B/C/D)</label>
+          <input class="w-full border rounded px-3 py-2" type="text" name="correctOption" th:value="${q.correctOption}" />
+        </div>
+        <button class="px-3 py-2 bg-yellow-500 text-white rounded" type="submit">Guardar</button>
+      </form>
+    </div>
+  </body>
+</html>
+
