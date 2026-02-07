@@ -4,9 +4,14 @@
     <meta charset="UTF-8" />
     <title>Mis Salas</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" th:href="@{/css/tailwind.css}" href="/css/tailwind.css" />
+    <link
+      rel="stylesheet"
+      th:href="@{/css/tailwind.css}"
+      href="/css/tailwind.css"
+    />
   </head>
   <body
+    th:attr="data-base=@{/}"
     class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
   >
     <div class="max-w-5xl mx-auto p-4 space-y-6">
@@ -156,7 +161,7 @@
                 <button
                   class="w-full rounded-full bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow transition hover:bg-red-700"
                   type="submit"
-                  onclick="return confirm('Â¿Borrar esta sala?');"
+                  onclick="return confirm('¿Seguro de borrar esta sala?');"
                 >
                   Borrar
                 </button>
@@ -215,7 +220,9 @@
                       <button
                         class="px-2 py-1 bg-red-600 text-white rounded text-xs"
                         type="submit"
-                        onclick="return confirm('Â¿Borrar esta sala?');"
+                        onclick="
+                          return confirm('¿Seguro de borrar esta sala?');
+                        "
                       >
                         Borrar
                       </button>
@@ -229,7 +236,6 @@
       </div>
     </div>
 
-    <script th:inline="javascript">window.APP_BASE = /*[[${#httpServletRequest.contextPath}]]*/ "";</script>
     <script th:src="@{/js/list.js}" src="/js/list.js"></script>
   </body>
 </html>

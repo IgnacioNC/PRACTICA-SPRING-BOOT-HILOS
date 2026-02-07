@@ -189,6 +189,8 @@ public class RoomService {
         List<Room> expired = roomRepository.findByStateAndLastActivityAtBefore(RoomState.WAITING, limit);
 
         for (Room r : expired) {
+            answerRepository.deleteByRoomQuestionRoom(r);
+            playerRepository.deleteByRoom(r);
             roomQuestionRepository.deleteByRoom(r);
             roomRepository.delete(r);
         }
@@ -199,6 +201,8 @@ public class RoomService {
     public void expireRoomNow(User host, Long roomId) {
         Room room = getMyRoomById(host, roomId);
         if (room.getState() == RoomState.WAITING) {
+            answerRepository.deleteByRoomQuestionRoom(room);
+            playerRepository.deleteByRoom(room);
             roomQuestionRepository.deleteByRoom(room);
             roomRepository.delete(room);
         }

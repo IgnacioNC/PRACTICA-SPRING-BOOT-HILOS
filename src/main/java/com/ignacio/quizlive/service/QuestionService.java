@@ -52,6 +52,18 @@ public class QuestionService {
         questionRepository.delete(q);
     }
 
+    public Question getQuestionInBlock(Block block, Long qid) {
+        Question q = questionRepository.findById(qid)
+                .orElseThrow(() -> new RuntimeException("Pregunta no encontrada"));
+        if (block == null || q.getBlock() == null || q.getBlock().getId() == null) {
+            throw new RuntimeException("Bloque invalido");
+        }
+        if (!q.getBlock().getId().equals(block.getId())) {
+            throw new RuntimeException("La pregunta no pertenece a este bloque");
+        }
+        return q;
+    }
+
     private void validate(String statement,
                           String a, String b, String c, String d,
                           String correct) {

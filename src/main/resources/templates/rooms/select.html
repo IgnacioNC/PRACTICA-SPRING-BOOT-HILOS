@@ -8,7 +8,7 @@
   </head>
   <body
     class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
-    th:attr="data-selected-count=${selectedCount}"
+    th:attr="data-selected-count=${selectedCount},data-base=@{/}"
   >
     <div class="max-w-3xl mx-auto p-4 space-y-6">
       <header class="flex items-center justify-between">
@@ -64,7 +64,6 @@
       </form>
     </div>
 
-    <script th:inline="javascript">window.APP_BASE = /*[[${#httpServletRequest.contextPath}]]*/ "";</script>
     <script th:src="@{/js/select.js}" src="/js/select.js"></script>
   </body>
 </html>

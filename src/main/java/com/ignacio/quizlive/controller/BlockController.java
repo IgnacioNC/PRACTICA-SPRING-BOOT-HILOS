@@ -4,7 +4,6 @@ import com.ignacio.quizlive.model.Block;
 import com.ignacio.quizlive.model.User;
 import com.ignacio.quizlive.service.BlockService;
 import com.ignacio.quizlive.service.QuestionService;
-import com.ignacio.quizlive.repository.QuestionRepository;
 import com.ignacio.quizlive.service.CurrentUserService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,13 +17,10 @@ public class BlockController {
     private final BlockService blockService;
     private final CurrentUserService currentUserService;
     private final QuestionService questionService;
-    private final QuestionRepository questionRepository;
-
     public BlockController(BlockService blockService, CurrentUserService currentUserService, 
-                        QuestionRepository questionRepository, QuestionService questionService) {
+                        QuestionService questionService) {
         this.blockService = blockService;
         this.currentUserService = currentUserService;
-        this.questionRepository = questionRepository;
         this.questionService = questionService;
     }
 
@@ -142,12 +138,7 @@ public class BlockController {
     public String editQuestionForm(@PathVariable Long bid, @PathVariable Long qid, Model model) {
         Block block = blockService.getMyBlockById(me(), bid);
 
-        Question q = questionRepository.findById(qid)
-                .orElseThrow(() -> new RuntimeException("Pregunta no encontrada"));
-
-        if (!q.getBlock().getId().equals(block.getId())) {
-            throw new RuntimeException("La pregunta no pertenece a este bloque");
-        }
+        Question q = questionService.getQuestionInBlock(block, qid);
 
         model.addAttribute("block", block);
         model.addAttribute("q", q);
@@ -165,12 +156,7 @@ public class BlockController {
                             Model model) {
         Block block = blockService.getMyBlockById(me(), bid);
 
-        Question q = questionRepository.findById(qid)
-                .orElseThrow(() -> new RuntimeException("Pregunta no encontrada"));
-
-        if (!q.getBlock().getId().equals(block.getId())) {
-            throw new RuntimeException("La pregunta no pertenece a este bloque");
-        }
+        Question q = questionService.getQuestionInBlock(block, qid);
 
         try {
             questionService.update(q, statement, optionA, optionB, optionC, optionD, correctOption);
@@ -187,12 +173,7 @@ public class BlockController {
     public String deleteQuestion(@PathVariable Long bid, @PathVariable Long qid) {
         Block block = blockService.getMyBlockById(me(), bid);
 
-        Question q = questionRepository.findById(qid)
-                .orElseThrow(() -> new RuntimeException("Pregunta no encontrada"));
-
-        if (!q.getBlock().getId().equals(block.getId())) {
-            throw new RuntimeException("La pregunta no pertenece a este bloque");
-        }
+        Question q = questionService.getQuestionInBlock(block, qid);
 
         questionService.delete(q);
         return "redirect:/blocks/" + bid;

@@ -1,6 +1,7 @@
 (() => {
   const root = document.body;
   const pin = root.dataset.pin;
+  const base = root.dataset.base || "/";
   if (!pin) return;
 
   const stateEl = document.getElementById("room-state");
@@ -67,10 +68,9 @@
 
   async function poll() {
     try {
-      const base = window.APP_BASE || "";
-      const res = await fetch(`${base}/play/${pin}/status`);
+      const res = await fetch(`${base}play/${pin}/status`);
       if (res.status === 401 || res.status === 403) {
-        window.location.href = "/join";
+        window.location.href = `${base}join`;
         return;
       }
       if (!res.ok) return;
@@ -80,7 +80,7 @@
       setStateSections(data.state, data.phase);
 
       if (data.error) {
-        window.location.href = "/join";
+        window.location.href = `${base}join`;
         return;
       }
 

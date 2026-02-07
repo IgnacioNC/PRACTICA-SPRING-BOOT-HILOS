@@ -13,7 +13,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
 
 @Controller
 public class PlayerController {
@@ -167,52 +166,7 @@ public class PlayerController {
             return java.util.Map.of("error", "unauthorized");
         }
 
-        gameService.touchPlayer(player);
-        gameService.finishIfNoActivePlayers(room, 15);
-        java.util.Map<String, Object> out = new java.util.HashMap<>();
-        out.put("state", room.getState().name());
-        out.put("phase", room.getPhase() == null ? RoomPhase.QUESTION.name() : room.getPhase().name());
-        boolean manualAdvance = room.getAdvanceMode() == null
-                || room.getAdvanceMode() == com.ignacio.quizlive.model.AdvanceMode.MANUAL;
-        if (!manualAdvance || (room.getPhase() != null && room.getPhase() == RoomPhase.RESULTS)) {
-            out.put("score", player.getScore());
-            out.put("position", gameService.getPosition(room, player));
-        }
-        out.put("advanceMode", room.getAdvanceMode() == null ? "AUTO" : room.getAdvanceMode().name());
-
-        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.QUESTION) {
-            RoomQuestion rq = gameService.getCurrentRoomQuestion(room);
-            out.put("secondsLeft", gameService.secondsLeft(room));
-            if (room.getQuestionStartedAt() != null) {
-                long endMs = room.getQuestionStartedAt()
-                        .plusSeconds(room.getTimePerQuestion())
-                        .atZone(java.time.ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli();
-                out.put("questionEndsAt", endMs);
-                out.put("serverNow", System.currentTimeMillis());
-            }
-            out.put("alreadyAnswered", gameService.hasAnswered(player, rq));
-            java.util.Map<String, String> q = new java.util.HashMap<>();
-            q.put("statement", rq.getQuestion().getStatement());
-            q.put("optionA", rq.getQuestion().getOptionA());
-            q.put("optionB", rq.getQuestion().getOptionB());
-            q.put("optionC", rq.getQuestion().getOptionC());
-            q.put("optionD", rq.getQuestion().getOptionD());
-            out.put("question", q);
-        }
-        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.RESULTS) {
-            RoomQuestion rq = gameService.getCurrentRoomQuestion(room);
-            Answer ans = gameService.getAnswer(player, rq);
-            boolean answered = ans != null;
-            boolean correct = answered && ans.isCorrect();
-            out.put("resultSecondsLeft", gameService.resultSecondsLeft(room));
-            out.put("answered", answered);
-            out.put("correct", correct);
-            out.put("statement", rq.getQuestion().getStatement());
-        }
-
-        return out;
+        return gameService.buildPlayStatus(room, player);
     }
 
     private Player getSessionPlayer(HttpSession session) {

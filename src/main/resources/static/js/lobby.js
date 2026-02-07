@@ -1,6 +1,7 @@
 (() => {
   const root = document.body;
   const roomId = root.dataset.roomId;
+  const base = root.dataset.base || "/";
   if (!roomId) return;
 
   const stateEl = document.getElementById("room-state");
@@ -25,6 +26,7 @@
   let questionEndsAt = null;
   let questionSecondsFallback = null;
   let clockOffset = 0;
+  let countdownSeconds = null;
 
   function nowMs() {
     return Date.now() + clockOffset;
@@ -101,8 +103,7 @@
 
   async function poll() {
     try {
-      const base = window.APP_BASE || "";
-      const res = await fetch(`${base}/rooms/${roomId}/status`, { credentials: "same-origin" });
+      const res = await fetch(`${base}rooms/${roomId}/status`, { credentials: "same-origin" });
       if (!res.ok) return;
       const data = await res.json();
 
@@ -120,8 +121,9 @@
         }
       }
 
-      if (countdownEl && data.secondsLeft != null) {
-        countdownEl.textContent = format(data.secondsLeft);
+      if (data.secondsLeft != null) {
+        countdownSeconds = data.secondsLeft;
+        if (countdownEl) countdownEl.textContent = format(countdownSeconds);
       }
 
       if (data.currentQuestion && currentQuestionEl && currentAnswerEl) {
@@ -205,4 +207,11 @@
   poll();
   setInterval(poll, 2000);
   setInterval(updateQuestionTimer, 250);
+  setInterval(() => {
+    if (countdownSeconds == null || !countdownEl) return;
+    if (countdownSeconds > 0) {
+      countdownSeconds -= 1;
+      countdownEl.textContent = format(countdownSeconds);
+    }
+  }, 1000);
 })();

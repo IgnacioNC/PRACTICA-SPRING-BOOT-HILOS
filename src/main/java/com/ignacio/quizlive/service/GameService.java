@@ -248,6 +248,86 @@ public class GameService {
         return answerRepository.findByPlayerAndRoomQuestion(player, rq).orElse(null);
     }
 
+    public java.util.Map<String, Object> buildPlayStatus(Room room, Player player) {
+        touchPlayer(player);
+        finishIfNoActivePlayers(room, 15);
+
+        java.util.Map<String, Object> out = new java.util.HashMap<>();
+        out.put("state", room.getState().name());
+        out.put("phase", room.getPhase() == null ? RoomPhase.QUESTION.name() : room.getPhase().name());
+        boolean manualAdvance = room.getAdvanceMode() == null
+                || room.getAdvanceMode() == AdvanceMode.MANUAL;
+        if (!manualAdvance || (room.getPhase() != null && room.getPhase() == RoomPhase.RESULTS)) {
+            out.put("score", player.getScore());
+            out.put("position", getPosition(room, player));
+        }
+        out.put("advanceMode", room.getAdvanceMode() == null ? "AUTO" : room.getAdvanceMode().name());
+
+        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.QUESTION) {
+            RoomQuestion rq = getCurrentRoomQuestion(room);
+            out.put("secondsLeft", secondsLeft(room));
+            if (room.getQuestionStartedAt() != null) {
+                long endMs = room.getQuestionStartedAt()
+                        .plusSeconds(room.getTimePerQuestion())
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli();
+                out.put("questionEndsAt", endMs);
+                out.put("serverNow", System.currentTimeMillis());
+            }
+            out.put("alreadyAnswered", hasAnswered(player, rq));
+            java.util.Map<String, String> q = new java.util.HashMap<>();
+            q.put("statement", rq.getQuestion().getStatement());
+            q.put("optionA", rq.getQuestion().getOptionA());
+            q.put("optionB", rq.getQuestion().getOptionB());
+            q.put("optionC", rq.getQuestion().getOptionC());
+            q.put("optionD", rq.getQuestion().getOptionD());
+            out.put("question", q);
+        }
+        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.RESULTS) {
+            RoomQuestion rq = getCurrentRoomQuestion(room);
+            Answer ans = getAnswer(player, rq);
+            boolean answered = ans != null;
+            boolean correct = answered && ans.isCorrect();
+            out.put("resultSecondsLeft", resultSecondsLeft(room));
+            out.put("answered", answered);
+            out.put("correct", correct);
+            out.put("statement", rq.getQuestion().getStatement());
+        }
+
+        return out;
+    }
+
+    public List<java.util.Map<String, String>> buildPlayerStates(Room room, int inactiveSeconds) {
+        List<Player> playersRaw = getPlayers(room);
+        RoomQuestion rq = null;
+        boolean timeUp = false;
+        java.time.LocalDateTime inactiveLimit = java.time.LocalDateTime.now().minusSeconds(inactiveSeconds);
+        try {
+            rq = getCurrentRoomQuestion(room);
+            timeUp = secondsLeft(room) == 0;
+        } catch (Exception ignored) {
+        }
+        java.util.List<java.util.Map<String, String>> playerStates = new java.util.ArrayList<>();
+        for (Player p : playersRaw) {
+            String status = "blank";
+            if (room.getState() == RoomState.FINISHED) {
+                status = "finished";
+            } else if (p.getLastSeenAt() != null && p.getLastSeenAt().isBefore(inactiveLimit)) {
+                status = "inactive";
+            } else if (rq != null) {
+                Answer a = getAnswer(p, rq);
+                if (a != null) {
+                    status = a.isCorrect() ? "correct" : "wrong";
+                } else if (timeUp) {
+                    status = "wrong";
+                }
+            }
+            playerStates.add(java.util.Map.of("name", p.getName(), "status", status));
+        }
+        return playerStates;
+    }
+
     public int getPosition(Room room, Player player) {
         List<Player> ranking = getRanking(room);
         for (int i = 0; i < ranking.size(); i++) {

@@ -2,7 +2,6 @@ package com.ignacio.quizlive.controller;
 
 import com.ignacio.quizlive.model.Block;
 import com.ignacio.quizlive.model.Room;
-import com.ignacio.quizlive.model.RoomPhase;
 import com.ignacio.quizlive.model.RoomState;
 import com.ignacio.quizlive.model.SelectionMode;
 import com.ignacio.quizlive.model.User;
@@ -10,14 +9,13 @@ import com.ignacio.quizlive.service.BlockService;
 import com.ignacio.quizlive.service.CurrentUserService;
 import com.ignacio.quizlive.service.GameService;
 import com.ignacio.quizlive.service.RoomService;
+import com.ignacio.quizlive.service.RoomStatusService;
+import com.ignacio.quizlive.service.RoomViewService;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,13 +27,17 @@ public class RoomController {
     private final BlockService blockService;
     private final CurrentUserService currentUserService;
     private final GameService gameService;
+    private final RoomViewService roomViewService;
+    private final RoomStatusService roomStatusService;
 
     public RoomController(RoomService roomService, BlockService blockService, CurrentUserService currentUserService,
-                          GameService gameService) {
+                          GameService gameService, RoomViewService roomViewService, RoomStatusService roomStatusService) {
         this.roomService = roomService;
         this.blockService = blockService;
         this.currentUserService = currentUserService;
         this.gameService = gameService;
+        this.roomViewService = roomViewService;
+        this.roomStatusService = roomStatusService;
     }
 
     private User me() {
@@ -145,77 +147,20 @@ public class RoomController {
             return "redirect:/rooms";
         }
 
-        long secondsLeft = 0;
-        long expiresAtMs = 0;
-
-        if (room.getState() == RoomState.WAITING) {
-            LocalDateTime expiresAt = room.getLastActivityAt().plusMinutes(10);
-
-            secondsLeft = Duration.between(LocalDateTime.now(), expiresAt).getSeconds();
-            if (secondsLeft < 0) secondsLeft = 0;
-
-            expiresAtMs = expiresAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-
-            if (secondsLeft == 0) {
-                roomService.expireRoomNow(me(), id);
-                return "redirect:/rooms";
-            }
-        }
-
-        boolean hasSelection = false;
-        try {
-            hasSelection = roomService.hasSelection(room);
-            model.addAttribute("selection", roomService.getSelection(room));
-        } catch (Exception ignored) {
-            model.addAttribute("selection", java.util.List.of());
-        }
-
-        if (room.getState() == RoomState.RUNNING) {
-            try {
-                com.ignacio.quizlive.model.RoomQuestion rq = gameService.getCurrentRoomQuestion(room);
-                model.addAttribute("currentQuestion", rq.getQuestion());
-            } catch (Exception ignored) {
-                model.addAttribute("currentQuestion", null);
-            }
-        }
-
-        if (room.getState() != RoomState.WAITING) {
-            model.addAttribute("ranking", gameService.getRanking(room));
-        } else {
-            model.addAttribute("ranking", java.util.List.of());
+        RoomViewService.LobbyView view = roomViewService.buildLobbyView(room);
+        if (view.isExpired()) {
+            roomService.expireRoomNow(me(), id);
+            return "redirect:/rooms";
         }
 
         model.addAttribute("room", room);
-        model.addAttribute("secondsLeft", secondsLeft);
-        model.addAttribute("expiresAtMs", expiresAtMs);
-        model.addAttribute("hasSelection", hasSelection);
-        java.util.List<java.util.Map<String, String>> playerStates = new java.util.ArrayList<>();
-        java.util.List<com.ignacio.quizlive.model.Player> playersRaw = gameService.getPlayers(room);
-        com.ignacio.quizlive.model.RoomQuestion rq = null;
-        boolean timeUp = false;
-        java.time.LocalDateTime inactiveLimit = java.time.LocalDateTime.now().minusSeconds(15);
-        try {
-            rq = gameService.getCurrentRoomQuestion(room);
-            timeUp = gameService.secondsLeft(room) == 0;
-        } catch (Exception ignored) {
-        }
-        for (com.ignacio.quizlive.model.Player p : playersRaw) {
-            String status = "blank";
-            if (room.getState() == RoomState.FINISHED) {
-                status = "finished";
-            } else if (p.getLastSeenAt() != null && p.getLastSeenAt().isBefore(inactiveLimit)) {
-                status = "inactive";
-            } else if (rq != null) {
-                com.ignacio.quizlive.model.Answer a = gameService.getAnswer(p, rq);
-                if (a != null) {
-                    status = a.isCorrect() ? "correct" : "wrong";
-                } else if (timeUp) {
-                    status = "wrong";
-                }
-            }
-            playerStates.add(java.util.Map.of("name", p.getName(), "status", status));
-        }
-        model.addAttribute("players", playerStates);
+        model.addAttribute("secondsLeft", view.getSecondsLeft());
+        model.addAttribute("expiresAtMs", view.getExpiresAtMs());
+        model.addAttribute("hasSelection", view.isHasSelection());
+        model.addAttribute("selection", view.getSelection());
+        model.addAttribute("currentQuestion", view.getCurrentQuestion());
+        model.addAttribute("ranking", view.getRanking());
+        model.addAttribute("players", view.getPlayers());
 
         return "rooms/lobby";
     }
@@ -289,73 +234,7 @@ public class RoomController {
     @ResponseBody
     public java.util.Map<String, Object> status(@PathVariable Long id) {
         Room room = roomService.getMyRoomById(me(), id);
-        // sin auto-avance, el anfitrión controla el ritmo
-        gameService.finishIfNoActivePlayers(room, 15);
-        java.util.Map<String, Object> out = new java.util.HashMap<>();
-        out.put("state", room.getState().name());
-        out.put("phase", room.getPhase() == null ? RoomPhase.QUESTION.name() : room.getPhase().name());
-        out.put("canShowResults", gameService.canShowResults(room));
-        out.put("advanceMode", room.getAdvanceMode() == null ? "AUTO" : room.getAdvanceMode().name());
-        out.put("secondsLeft", roomService.secondsLeftToExpire(room));
-        java.util.List<java.util.Map<String, String>> playersOut = new java.util.ArrayList<>();
-        java.util.List<com.ignacio.quizlive.model.Player> playersRawOut = gameService.getPlayers(room);
-        com.ignacio.quizlive.model.RoomQuestion rqOut = null;
-        boolean timeUpOut = false;
-        java.time.LocalDateTime inactiveLimitOut = java.time.LocalDateTime.now().minusSeconds(15);
-        try {
-            rqOut = gameService.getCurrentRoomQuestion(room);
-            timeUpOut = gameService.secondsLeft(room) == 0;
-        } catch (Exception ignored) {
-        }
-        for (com.ignacio.quizlive.model.Player p : playersRawOut) {
-            String status = "blank";
-            if (room.getState() == RoomState.FINISHED) {
-                status = "finished";
-            } else if (p.getLastSeenAt() != null && p.getLastSeenAt().isBefore(inactiveLimitOut)) {
-                status = "inactive";
-            } else if (rqOut != null) {
-                com.ignacio.quizlive.model.Answer a = gameService.getAnswer(p, rqOut);
-                if (a != null) {
-                    status = a.isCorrect() ? "correct" : "wrong";
-                } else if (timeUpOut) {
-                    status = "wrong";
-                }
-            }
-            playersOut.add(java.util.Map.of("name", p.getName(), "status", status));
-        }
-        out.put("players", playersOut);
-        if (room.getState() != RoomState.WAITING) {
-            out.put("ranking", gameService.getRanking(room).stream()
-                    .map(p -> java.util.Map.of("name", p.getName(), "score", p.getScore()))
-                    .toList());
-        } else {
-            out.put("ranking", java.util.List.of());
-        }
-
-        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.QUESTION) {
-            try {
-                com.ignacio.quizlive.model.RoomQuestion rq = gameService.getCurrentRoomQuestion(room);
-                out.put("questionSecondsLeft", gameService.secondsLeft(room));
-                if (room.getQuestionStartedAt() != null) {
-                    long endMs = room.getQuestionStartedAt()
-                            .plusSeconds(room.getTimePerQuestion())
-                            .atZone(ZoneId.systemDefault())
-                            .toInstant()
-                            .toEpochMilli();
-                    out.put("questionEndsAt", endMs);
-                    out.put("serverNow", System.currentTimeMillis());
-                }
-                java.util.Map<String, String> q = new java.util.HashMap<>();
-                q.put("statement", rq.getQuestion().getStatement());
-                q.put("correctOption", rq.getQuestion().getCorrectOption());
-                out.put("currentQuestion", q);
-            } catch (Exception ignored) {
-                out.put("currentQuestion", null);
-            }
-        }
-        if (room.getState() == RoomState.RUNNING && room.getPhase() == RoomPhase.RESULTS) {
-            out.put("resultSecondsLeft", gameService.resultSecondsLeft(room));
-        }
-        return out;
+        return roomStatusService.buildStatus(room);
     }
 }
+

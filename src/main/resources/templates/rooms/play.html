@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/tailwind.css}" href="/css/tailwind.css" />
   </head>
   <body
-    th:attr="data-pin=${room.pin}"
+    th:attr="data-pin=${room.pin},data-base=@{/}"
     class="min-h-screen bg-gradient-to-br from-amber-50 via-rose-50 to-indigo-50 text-gray-900"
   >
     <div class="max-w-2xl mx-auto p-4 space-y-6">
@@ -194,7 +194,6 @@
       </div>
     </div>
 
-    <script th:inline="javascript">window.APP_BASE = /*[[${#httpServletRequest.contextPath}]]*/ "";</script>
     <script th:src="@{/js/play.js}" src="/js/play.js"></script>
   </body>
 </html>
