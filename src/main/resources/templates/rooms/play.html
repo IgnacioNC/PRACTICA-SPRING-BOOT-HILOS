@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <title>Juego</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="/css/tailwind.css" />
+    <link rel="stylesheet" th:href="@{/css/tailwind.css}" href="/css/tailwind.css" />
   </head>
   <body
     th:attr="data-pin=${room.pin}"
@@ -194,6 +194,7 @@
       </div>
     </div>
 
-    <script src="/js/play.js"></script>
+    <script th:inline="javascript">window.APP_BASE = /*[[${#httpServletRequest.contextPath}]]*/ "";</script>
+    <script th:src="@{/js/play.js}" src="/js/play.js"></script>
   </body>
 </html>

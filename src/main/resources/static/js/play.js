@@ -67,7 +67,8 @@
 
   async function poll() {
     try {
-      const res = await fetch(`/play/${pin}/status`);
+      const base = window.APP_BASE || "";
+      const res = await fetch(`${base}/play/${pin}/status`);
       if (res.status === 401 || res.status === 403) {
         window.location.href = "/join";
         return;

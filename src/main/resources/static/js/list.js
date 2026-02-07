@@ -63,7 +63,8 @@
         const id = parseInt(row.dataset.roomId, 10);
         if (!id) return;
         try {
-          const res = await fetch(`/rooms/${id}/status`, { credentials: "same-origin" });
+          const base = window.APP_BASE || "";
+          const res = await fetch(`${base}/rooms/${id}/status`, { credentials: "same-origin" });
           if (!res.ok) return;
           const data = await res.json();
           if (!data?.state) return;
@@ -79,7 +80,8 @@
 
   setInterval(async () => {
     try {
-      const res = await fetch("/rooms/api/my", { credentials: "same-origin" });
+      const base = window.APP_BASE || "";
+      const res = await fetch(`${base}/rooms/api/my`, { credentials: "same-origin" });
       const ids = await res.json();
 
       document.querySelectorAll("[data-room-id]").forEach((row) => {

@@ -101,7 +101,8 @@
 
   async function poll() {
     try {
-      const res = await fetch(`/rooms/${roomId}/status`, { credentials: "same-origin" });
+      const base = window.APP_BASE || "";
+      const res = await fetch(`${base}/rooms/${roomId}/status`, { credentials: "same-origin" });
       if (!res.ok) return;
       const data = await res.json();
 
